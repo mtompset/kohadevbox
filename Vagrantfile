@@ -12,7 +12,7 @@ end
 Vagrant.configure(2) do |config|
 
   # http://fgrehm.viewdocs.io/vagrant-cachier
-  if Vagrant.has_plugin?("vagrant-cachier")
+  if Vagrant.has_plugin?("vagrant-cachier") and not OS.windows?
     config.cache.scope = :box
     config.cache.synced_folder_opts = {
       type: :nfs,
@@ -24,6 +24,14 @@ Vagrant.configure(2) do |config|
     }
   else
     puts "Run 'vagrant plugin install vagrant-cachier' to speed up provisioning."
+  end
+
+  # Default to host's ansible
+  provisioner = :ansible
+  local_ansible = false
+
+  if ENV['LOCAL_ANSIBLE'] or OS.windows?
+    local_ansible = true
   end
 
   config.vm.hostname = "kohadevbox"
@@ -44,7 +52,7 @@ Vagrant.configure(2) do |config|
   end
 
   config.vm.define "xenial", autostart: false do |xenial|
-    xenial.vm.box = "ubuntu/xenial64"
+    xenial.vm.box = "geerlingguy/ubuntu1604"
   end
 
   config.vm.network :forwarded_port, guest: 6001, host: 6001, auto_correct: true  # SIP2
@@ -58,17 +66,22 @@ Vagrant.configure(2) do |config|
   end
 
   if ENV['SYNC_REPO']
-    config.vm.synced_folder ENV['SYNC_REPO'], "/home/vagrant/kohaclone", type: "nfs"
+    if OS.windows?
+      unless Vagrant.has_plugin?("vagrant-vbguest")
+        raise 'The vagrant-vbguest plugin is not present, and is mandatory for SYNC_REPO on Windows! See README.md'
+      end
+
+      config.vm.synced_folder ENV['SYNC_REPO'], "/home/vagrant/kohaclone", type: "virtualbox"
+
+    else
+      # We should safely rely on NFS
+      config.vm.synced_folder ENV['SYNC_REPO'], "/home/vagrant/kohaclone", type: "nfs"
+    end
   end
 
-  # Default to host's ansible
-  provisioner = :ansible
-  local_ansible = false
-
-  if OS.windows? or ENV['LOCAL_ANSIBLE']
+  if local_ansible
     provisioner = :ansible_local
     config.vm.provision :shell, path: "tools/install-ansible.sh"
-    local_ansible = true
   end
 
   config.vm.provision provisioner do |ansible|
@@ -84,6 +97,10 @@ Vagrant.configure(2) do |config|
 
     if ENV['KOHA_ELASTICSEARCH']
       ansible.extra_vars.merge!({ elasticsearch: true });
+    end
+
+    if ENV['CREATE_ADMIN_USER']
+      ansible.extra_vars.merge!({ create_admin_user: true });
     end
 
     ansible.playbook = "site.yml"

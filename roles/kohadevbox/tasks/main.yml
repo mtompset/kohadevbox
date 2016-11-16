@@ -1,19 +1,7 @@
----
 # file: roles/kohadevbox/tasks/main.yml
-  - name: Add Apache 2.4 backports (Trusty)
-    apt_repository: repo='ppa:lvillani/apache2'
-    when: ansible_distribution_release == 'trusty'
-
-  - name: Add Apache 2.4 backports (Wheezy)
-    apt_repository: repo='deb http://www.d7031.de/debian wheezy-experimental main' state=present
-    when: ansible_distribution_release == 'wheezy'
-
+---
   - name: Update Apt cache and system packages
     apt: update_cache=yes upgrade=dist
-
-  - name: Install Wheezy backport repo keyring
-    apt: pkg=d7031-archive-keyring state=latest force=yes
-    when: ansible_distribution_release == 'wheezy'
 
   - name: Install default tools
     apt: pkg={{ item }} state=latest force=yes
@@ -25,8 +13,10 @@
       - git
       - git-email
       - apache2
+      - libapache2-mpm-itk
       - libdata-printer-perl
       - perltidy
+      - pmtools
       - memcached
 
   - name: Install extra tools
@@ -101,15 +91,28 @@
 
   - include: elasticsearch.yml
     become_user: root
-    when: elasticsearch
+    when: elasticsearch and elasticsearch_version == '1.7'
+
+  - include: elasticsearch-2.x.yml
+    become_user: root
+    when: elasticsearch and elasticsearch_version == '2.x'
+
+  - name: Load sample data
+    become_user: root
+    shell: koha-shell {{ koha_instance_name }} -c "/home/vagrant/kohaclone/misc/devel/populate_db.pl --marcflavour {{ koha_marc_flavour }}"
+    when: skip_webinstaller
+
+  - name: Create Koha admin user ({{ koha_admin_user }} / {{ koha_admin_pass }})
+    become_user: root
+    shell: koha-shell {{ koha_instance_name }} -c "/home/vagrant/kohaclone/misc/devel/create_superlibrarian.pl --userid {{ koha_admin_user }} --password {{ koha_admin_pass }}"
+    when: skip_webinstaller and create_admin_user
 
   - include: plack.yml
     become_user: root
-    when: plack
-
-  - name: Load sample data
-    shell: koha-shell {{ koha_instance_name }} -c "/home/vagrant/kohaclone/misc/devel/populate_db.pl --marcflavour {{ koha_marc_flavour }}"
-    when: skip_webinstaller
+    when:
+      - plack
+      - ansible_distribution_release != 'wheezy' # plack not supported on wheezy
+      - ansible_distribution_release != 'trusty' # plack not supported on trusty
 
   - name: Init database for mlocate
     shell: updatedb

@@ -10,8 +10,10 @@
 # environment variable.
 # sync_repo: false
 # skip_webinstaller: false
+# create_admin_user: false
 # enable_memcached: true
 # elasticsearch: false
+# elasticsearch_version: 1.7
 # plack: true
 
 # Set mysql_engine: mysql | mariadb
@@ -31,7 +33,7 @@
 # koha_custom_repo_distribution: unstable
 
 # koha_use_custom_repo: yes
-# koha_pin_custom_repo: yes
+# koha_pin_custom_repo: no
 
 # koha_git_repo: http://git.koha-community.org/koha.git
 # koha_git_branch: master
@@ -47,6 +49,8 @@
 # koha_marc_flavour: marc21
 # koha_zebra_language: en
 # koha_db_password: password
+# koha_admin_user: admin
+# koha_admin_pass: admin
 
 # gitify_repo: https://github.com/mkfifo/koha-gitify.git
 # gitify_version: master
@@ -69,6 +73,8 @@
 
 # bz_user: your_email
 # bz_password: your_bz_password
+
+# cpan_mirror: http://mirror.cc.columbia.edu/pub/software/cpan
 
 # extra_tools:
 #  - vim

@@ -137,6 +137,8 @@ Some aliases are provided to help reduce typing:
 
 * koha-intra-err - tail the intranet error log
 * koha-opac-err - tail the OPAC error log
+* koha-plack-log - tail the Plack access log
+* koha-plack-err - tail de Plack error log
 * koha-user - get the db/admin username from koha-conf.xml
 * koha-pass - get the db/admin password from koha-conf.xml
 
@@ -195,6 +197,8 @@ box.
 * When you do "vagrant up", the Koha instance configured by the box will run
 off whatever branch you had checked out in your pre-existing repo when you ran
 "vagrant up".
+* Windows users need to have the *vagrant-vbguest* in order to use this feature. If
+the plugin is not present and SYNC_REPO is set, it will fail with an error.
 
 ### SKIP_WEBINSTALLER
 
@@ -206,6 +210,19 @@ Usage:
 ```
 
 This makes the provisioning script populate the DB with the sample data.
+
+### CREATE_ADMIN_USER
+
+Value: 1
+
+Usage:
+```
+  $ CREATE_ADMIN_USER=1 vagrant up
+```
+
+This makes the provisioning script create a superlibrarian user, suitable for testing.
+
+NOTE: The user is only created if SKIP_WEBINSTALLER was chosen too.
 
 ### KOHA_ELASTICSEARCH
 
@@ -220,6 +237,10 @@ Usage:
 This makes the provisioning scripts install Elasticsearch-related stuff, which is
 still in heavy development. This is required for testing ES patches, and is not
 enabled by default because it takes more time to complete and not everyone is interested yet.
+
+NOTE: It defaults to Elasticsearch 1.7, but development has moved towards Elasticsearch 2.4 (the
+2.x branch). If you want to work on 2.x support, set _elasticsearch_version_ to _2.x_ in your
+_vars/user.yml_ file.
 
 ### LOCAL_ANSIBLE
 
