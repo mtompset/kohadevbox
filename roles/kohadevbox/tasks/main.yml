@@ -36,7 +36,7 @@
 
     # This needs to be done before trying to enable the cgi module
   - name: Apache MPM fix
-    apache2_module: state=absent name=mpm_event
+    apache2_module: state=absent name=mpm_prefork
     notify: restart apache
 
   - name: Disable Apache default vhost
